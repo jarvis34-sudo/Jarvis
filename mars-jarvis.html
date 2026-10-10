@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mars Jarvis</title>
+<style>
+:root{--bg:#050608;--ink:#f1e6dc;--dim:#9a8b80;--red:#ff5a36;--gold:#ffb347;--glass:rgba(255,120,70,.06);--line:rgba(255,150,90,.22)}
+*{box-sizing:border-box;margin:0}
+body{font:15px/1.5 "Segoe UI",system-ui,sans-serif;background:radial-gradient(ellipse at 15% 0,#2a0f08 0,var(--bg) 55%);color:var(--ink);min-height:100vh;display:flex}
+aside{width:210px;padding:20px 14px;border-right:1px solid var(--line);background:var(--glass);backdrop-filter:blur(14px);display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh}
+.logo{font:600 20px Georgia,serif;letter-spacing:.08em;color:var(--gold);margin-bottom:14px}
+nav button{width:100%;text-align:left;padding:10px 12px;border:1px solid transparent;border-radius:10px;background:none;color:var(--dim);font:inherit;cursor:pointer}
+nav button.on,nav button:hover{color:var(--ink);border-color:var(--line);background:var(--glass)}
+main{flex:1;padding:24px;max-width:980px;min-width:0}
+.v{display:none}.v.on{display:block}
+h2{font:500 26px Georgia,serif;margin-bottom:16px}
+.card{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--glass);backdrop-filter:blur(14px);margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.big{font:600 34px Georgia,serif;color:var(--gold)}
+input,textarea,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.4);color:var(--ink);font:inherit}
+button.b{padding:9px 14px;border-radius:10px;border:1px solid var(--red);background:rgba(255,90,54,.15);color:var(--ink);cursor:pointer;font:inherit}
+button.b:hover{background:rgba(255,90,54,.35)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.row{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}.row>input,.row>textarea{flex:1;min-width:140px}.row>select{width:auto}
+.item{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.item>span{flex:1;overflow-wrap:anywhere}.item.done>span{text-decoration:line-through;color:var(--dim)}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);cursor:pointer}
+.high{color:var(--red);border-color:var(--red)}.medium{color:var(--gold)}.low{color:var(--dim)}
+.hud{width:170px;height:170px;margin:6px auto 14px;position:relative}
+.hud i{position:absolute;inset:0;border-radius:50%;border:2px solid var(--red);border-top-color:transparent;border-bottom-color:transparent;animation:sp 6s linear infinite}
+.hud i:nth-child(2){inset:16px;border-color:var(--gold);border-left-color:transparent;border-right-color:transparent;animation-duration:4s;animation-direction:reverse}
+.hud i:nth-child(3){inset:34px;border:1px dashed var(--line);animation-duration:12s}
+.hud b{position:absolute;inset:58px;border-radius:50%;background:var(--red);opacity:.5;transition:.2s}
+.hud.hot b{opacity:1;box-shadow:0 0 40px var(--red);animation:pl .8s infinite}
+@keyframes sp{to{transform:rotate(360deg)}}@keyframes pl{50%{transform:scale(1.25)}}
+#log{max-height:300px;overflow:auto;font-size:14px}#log p{padding:4px 0}#log .J{color:var(--gold)}
+.status{color:var(--dim);font-size:13px}
+@media(max-width:700px){body{flex-direction:column}aside{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;padding:10px}.logo{display:none}nav{display:flex;gap:4px}nav button{white-space:nowrap}main{padding:14px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<aside><div class="logo">MARS JARVIS</div>
+<nav><button data-v="home" class="on">Home</button><button data-v="memory">Memory</button><button data-v="tasks">Tasks</button><button data-v="voice">Voice console</button><button data-v="settings">Settings</button></nav></aside>
+<main>
+<section class="v on" id="home"><h2>Good to see you</h2>
+<div class="card"><div class="hud" id="hud1"><i></i><i></i><i></i><b></b></div>
+<p class="status" style="text-align:center" id="stat">Drive: not connected</p>
+<div class="row" style="justify-content:center"><button class="b" id="auth">Sign in with Google</button></div></div>
+<div class="grid"><div class="card"><div class="big" id="nN">0</div>Notes</div><div class="card"><div class="big" id="nT">0</div>Open tasks</div><div class="card"><div class="big" id="nC">0</div>Conversations</div></div></section>
+
+<section class="v" id="memory"><h2>Memory</h2>
+<div class="card"><textarea id="nIn" rows="2" placeholder="Write a note"></textarea>
+<div class="row"><button class="b" id="nAdd">Save note</button><input id="nQ" placeholder="Search notes"></div><div id="nList"></div></div></section>
+
+<section class="v" id="tasks"><h2>Tasks</h2>
+<div class="card"><div class="row"><input id="tIn" placeholder="New task"><select id="tP"><option>medium</option><option>high</option><option>low</option></select><button class="b" id="tAdd">Add task</button></div><div id="tList"></div></div></section>
+
+<section class="v" id="voice"><h2>Voice console</h2>
+<div class="card"><div class="hud" id="hud2"><i></i><i></i><i></i><b></b></div>
+<p class="status" style="text-align:center" id="vs">Listening is off</p>
+<div class="row" style="justify-content:center"><button class="b" id="bL">Start listening</button><button class="b" id="bP">Push to talk</button><button class="b" id="bM">Mute voice</button><button class="b" id="bT">Test microphone</button></div>
+<p class="status" style="text-align:center">Say "Jarvis" first: add note…, show notes, search notes…, delete last note, add high task…, complete task 1, delete task 1, set task 1 high, show tasks.</p></div>
+<div class="card"><b>Command history</b><div id="log"></div></div></section>
+
+<section class="v" id="settings"><h2>Settings</h2>
+<div class="card"><label>Google OAuth Client ID</label><div class="row"><input id="cid" placeholder="xxxx.apps.googleusercontent.com"><button class="b" id="cSave">Save</button></div>
+<p class="status">Create a Web client in Google Cloud, enable the Drive API, and add this page's origin as an authorized JavaScript origin. Serve the file over https or http://localhost; file:// will not work. Sign-in lasts about an hour, then sign in again.</p></div>
+<div class="card"><label><input type="checkbox" id="spk" style="width:auto"> Spoken responses</label><p class="status">Wake word: jarvis. Data file: jarvis-data.json in your Drive (app-created files only).</p></div></section>
+</main>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+let D={notes:[],tasks:[],research:[],settings:{speak:true},conversations:[]},tok=null,fid=null,muted=false,on=false,rec=null,st;
+const ord={high:0,medium:1,low:2},tasks=()=>[...D.tasks].sort((a,b)=>a.done-b.done||ord[a.priority]-ord[b.priority]);
+
+/* ---- Drive memory ---- */
+async function g(p,o={}){const r=await fetch('https://www.googleapis.com/'+p,{...o,headers:{Authorization:'Bearer '+tok,...(o.headers||{})}});if(!r.ok)throw Error(r.status);return r.json()}
+async function loadMemory(){
+ const q=encodeURIComponent("name='jarvis-data.json' and trashed=false"),l=await g(`drive/v3/files?q=${q}&fields=files(id)`);
+ if(l.files.length){fid=l.files[0].id;const R=await g(`drive/v3/files/${fid}?alt=media`),mg=(a,b)=>[...(b||[]),...a.filter(x=>!(b||[]).some(y=>y.id===x.id))];D={...D,...R,notes:mg(D.notes,R.notes),tasks:mg(D.tasks,R.tasks),conversations:mg(D.conversations,R.conversations),settings:{speak:true,...R.settings}};saveMemory()}
+ else{const m=await g('upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary=jx'},
+  body:`--jx\r\nContent-Type: application/json\r\n\r\n{"name":"jarvis-data.json","mimeType":"application/json"}\r\n--jx\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(D)}\r\n--jx--`});fid=m.id}
+ render()}
+function saveMemory(){clearTimeout(st);st=setTimeout(async()=>{if(!tok||!fid)return;
+ try{await g(`upload/drive/v3/files/${fid}?uploadType=media`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(D)});$('#stat').textContent='Drive: synced'}
+ catch(e){$('#stat').textContent='Drive: sync failed, sign in again'}},400)}
+function editMemory(c,id,p){const o=D[c].find(x=>x.id===id);if(o)Object.assign(o,p);saveMemory();render()}
+function deleteMemory(c,id){D[c]=D[c].filter(x=>x.id!==id);saveMemory();render()}
+
+/* ---- Auth ---- */
+function signIn(){const id=localStorage.mjClient;if(location.protocol==='file:')return say('Google sign-in does not work from a file. Serve this page at http://localhost:8000 and open it there.');if(!id){say('Add your Google client ID in Settings first.');return show('settings')}
+ const go=()=>google.accounts.oauth2.initTokenClient({client_id:id,scope:'https://www.googleapis.com/auth/drive.file',error_callback:()=>say('The Google sign-in popup was blocked or closed. Allow popups for this page and try again.'),
+  callback:async r=>{if(r.error)return say('Sign in failed.');tok=r.access_token;$('#auth').textContent='Connected';$('#stat').textContent='Drive: connected';
+   try{await loadMemory();say('Drive connected. Memory loaded.')}catch(e){say(e.message==='403'?'Google blocked Drive access. Enable the Drive API and add your account as a test user.':e.message==='401'?'Sign in expired. Please sign in again.':'Could not read Drive memory.')}}}).requestAccessToken();
+ if(window.google&&google.accounts)go();else{const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=go;document.head.appendChild(s)}}
+
+/* ---- Voice ---- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function say(t){log('Jarvis',t);if(muted||!D.settings.speak||!window.speechSynthesis)return;speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))}
+function log(who,text){D.conversations.push({id:uid(),who,text,t:Date.now()});D.conversations=D.conversations.slice(-200);saveMemory();render()}
+function hot(v){['#hud1','#hud2'].forEach(s=>$(s).classList.toggle('hot',v))}
+const WAKE=/(?:jarvis|jar\s?vis|jarves|jarvus|jervis|travis)[,.\s]*(.*)/i;
+function micErr(e){const m={'not-allowed':'Microphone is blocked. Click the lock icon in the address bar, set Microphone to Allow, then reload.','service-not-allowed':'Microphone is blocked. Click the lock icon in the address bar, set Microphone to Allow, then reload.','audio-capture':'No microphone found. Plug one in or choose one in system settings.','network':'Speech recognition needs an internet connection.','no-speech':''}[e];
+ if(m===undefined)return;if(m){on=false;hot(false);$('#bL').textContent='Start listening';$('#vs').textContent=m;say(m)}}
+async function micCheck(){
+ if(!window.isSecureContext&&location.protocol!=='file:'){$('#vs').textContent='Microphone needs https or http://localhost.';return false}
+ try{(await navigator.mediaDevices.getUserMedia({audio:true})).getTracks().forEach(t=>t.stop());return true}
+ catch(e){micErr(e.name==='NotFoundError'?'audio-capture':'not-allowed');return false}}
+async function listen(){if(!SR)return say('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+ if(on){on=false;rec.stop();hot(false);$('#bL').textContent='Start listening';$('#vs').textContent='Listening is off';return}
+ if(!await micCheck())return;
+ rec=new SR();rec.continuous=true;rec.lang='en-US';rec.onerror=e=>micErr(e.error);
+ rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal){const t=e.results[i][0].transcript.trim(),m=t.match(WAKE);
+  $('#vs').textContent='Heard: "'+t+'"'+(m?'':' (start with "Jarvis")');if(m)handle(m[1])}};
+ rec.onend=()=>{if(on)try{rec.start()}catch(e){}};rec.start();on=true;hot(true);$('#bL').textContent='Stop listening';$('#vs').textContent='Listening for "Jarvis"'}
+async function push(){if(!SR)return say('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+ if(!await micCheck())return;
+ const r=new SR();r.lang='en-US';r.onstart=()=>{hot(true);$('#vs').textContent='Go ahead, I am listening…'};r.onend=()=>{hot(on);if(!/Heard|blocked/.test($('#vs').textContent))$('#vs').textContent=on?'Listening for "Jarvis"':'Listening is off'};
+ r.onerror=e=>{if(e.error==='no-speech')$('#vs').textContent='I did not hear anything. Try again.';else micErr(e.error)};
+ r.onresult=e=>{const t=e.results[0][0].transcript;$('#vs').textContent='Heard: "'+t+'"';handle(t.replace(/^(?:jarvis|jar\s?vis|travis)[,.\s]*/i,''))};r.start()}
+
+/* ---- Commands ---- */
+function handle(raw){const r=raw.trim().replace(/[.!?]+$/,'');if(!r)return say('Yes?');log('You',r);let m;
+ if(m=r.match(/^(?:add|at|save|create)\s+(?:a\s+)?note[\s:,]*(?:that\s+)?(.+)/i)){D.notes.unshift({id:uid(),text:m[1],created:Date.now()});saveMemory();render();say('I have saved your note.')}
+ else if(/^(?:show|list|read)\s+(?:my\s+)?notes?/i.test(r)){show('memory');say(D.notes.length?`You have ${D.notes.length} note${D.notes.length>1?'s':''}. Latest: ${D.notes[0].text}`:'You have no notes yet.')}
+ else if(m=r.match(/^search\s+notes?\s+(?:for\s+)?(.+)/i)){show('memory');$('#nQ').value=m[1];render();say(`Found ${D.notes.filter(n=>n.text.toLowerCase().includes(m[1].toLowerCase())).length} matching note(s).`)}
+ else if(/^delete\s+(?:the\s+)?(?:last|latest)\s+note/i.test(r)){if(D.notes[0]){deleteMemory('notes',D.notes[0].id);say('Latest note deleted.')}else say('There are no notes.')}
+ else if(m=r.match(/^delete\s+note\s+(\d+|one|two|three|four|five)/i)){const n=D.notes[(NW[m[1].toLowerCase()]||m[1])-1];n?(deleteMemory('notes',n.id),say('Note deleted.')):say('I could not find that note.')}
+ else if(m=r.match(/^add\s+(?:a\s+)?(?:(high|medium|low)\s+priority\s+|(high|medium|low)\s+)?task[\s:,]*(?:to\s+)?(.+)/i)){D.tasks.push({id:uid(),text:m[3],done:false,priority:(m[1]||m[2]||'medium').toLowerCase()});saveMemory();render();say('Task added.')}
+ else if(/^(?:show|list|read)\s+(?:my\s+)?tasks?/i.test(r)){show('tasks');const o=tasks().filter(t=>!t.done);say(o.length?`You have ${o.length} open tasks. First: ${o[0].text}`:'No open tasks.')}
+ else if(m=r.match(/^(?:complete|finish)\s+task\s+(.+)/i)){const t=findT(m[1]);t?(editMemory('tasks',t.id,{done:true}),say('Task completed.')):say('I could not find that task.')}
+ else if(m=r.match(/^delete\s+task\s+(.+)/i)){const t=findT(m[1]);t?(deleteMemory('tasks',t.id),say('Task deleted.')):say('I could not find that task.')}
+ else if(m=r.match(/^set\s+task\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:priority\s+)?(?:to\s+)?(high|medium|low)/i)){const t=findT(m[1]);t?(editMemory('tasks',t.id,{priority:m[2].toLowerCase()}),say(`Priority set to ${m[2]}.`)):say('I could not find that task.')}
+ else if(m=r.match(/^(?:open|go to)\s+(home|memory|tasks|voice|settings)/i)){show(m[1].toLowerCase());say('Opening '+m[1]+'.')}
+ else say('I did not catch a command. Try add note, show notes, add task, or complete task.')}
+const NW={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10};
+function findT(q){q=String(NW[q.trim().toLowerCase()]||q);const l=tasks();return /^\d+$/.test(q.trim())?l[q-1]:l.find(t=>t.text.toLowerCase().includes(q.toLowerCase()))}
+
+/* ---- UI ---- */
+function show(v){document.querySelectorAll('.v').forEach(e=>e.classList.toggle('on',e.id===v));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v))}
+function render(){
+ $('#nN').textContent=D.notes.length;$('#nT').textContent=D.tasks.filter(t=>!t.done).length;$('#nC').textContent=D.conversations.length;
+ const q=$('#nQ').value.toLowerCase(),ns=D.notes.filter(n=>n.text.toLowerCase().includes(q));
+ $('#nList').innerHTML=ns.map(n=>`<div class="item"><span>${esc(n.text)}</span><button class="b" data-e="${n.id}">Edit</button><button class="b" data-d="${n.id}">Delete</button></div>`).join('')||'<p class="status">No notes yet. Write one above or say "Jarvis, add note…".</p>';
+ $('#tList').innerHTML=tasks().map(t=>`<div class="item ${t.done?'done':''}"><input type="checkbox" style="width:auto" ${t.done?'checked':''} data-c="${t.id}"><span>${esc(t.text)}</span><span class="tag ${t.priority}" data-p="${t.id}" style="flex:none">${t.priority}</span><button class="b" data-x="${t.id}">Delete</button></div>`).join('')||'<p class="status">No tasks. Add your first one above.</p>';
+ $('#log').innerHTML=D.conversations.slice(-40).reverse().map(c=>`<p class="${c.who=='Jarvis'?'J':''}"><b>${c.who}:</b> ${esc(c.text)}</p>`).join('');
+ $('#spk').checked=!!D.settings.speak}
+document.addEventListener('click',e=>{const d=e.target.dataset;
+ if(d.v)show(d.v);
+ if(d.e){const n=D.notes.find(x=>x.id===d.e),t=prompt('Edit note',n.text);if(t)editMemory('notes',d.e,{text:t})}
+ if(d.d)deleteMemory('notes',d.d);if(d.x)deleteMemory('tasks',d.x);
+ if(d.p){const t=D.tasks.find(x=>x.id===d.p);editMemory('tasks',d.p,{priority:['high','medium','low'][(ord[t.priority]+1)%3]})}});
+document.addEventListener('change',e=>{if(e.target.dataset.c)editMemory('tasks',e.target.dataset.c,{done:e.target.checked});if(e.target.id=='spk'){D.settings.speak=e.target.checked;saveMemory()}});
+$('#nAdd').onclick=()=>{const t=$('#nIn').value.trim();if(t){D.notes.unshift({id:uid(),text:t,created:Date.now()});$('#nIn').value='';saveMemory();render()}};
+$('#nQ').oninput=render;
+$('#tAdd').onclick=()=>{const t=$('#tIn').value.trim();if(t){D.tasks.push({id:uid(),text:t,done:false,priority:$('#tP').value});$('#tIn').value='';saveMemory();render()}};
+$('#auth').onclick=signIn;$('#bL').onclick=listen;$('#bT').onclick=async()=>{if(await micCheck()){$('#vs').textContent='Microphone works.';say('Microphone is working.')}};$('#bP').onclick=push;
+$('#bM').onclick=()=>{muted=!muted;speechSynthesis.cancel();$('#bM').textContent=muted?'Unmute voice':'Mute voice'};
+$('#cSave').onclick=()=>{localStorage.mjClient=$('#cid').value.trim();say('Client ID saved.')};
+$('#cid').value=localStorage.mjClient||'';render();
+</script></body></html>
